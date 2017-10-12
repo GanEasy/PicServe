@@ -21,10 +21,10 @@ func api(c echo.Context) error {
 	input := c.Param("url")
 	uDec, err := base64.URLEncoding.DecodeString(input)
 	if err != nil {
-		log.Fatalln(err)
+		PrintErrorHandler(c.Response().Writer, c.Request())
+	} else {
+		PrintHandler(string(uDec), c.Response().Writer, c.Request())
 	}
-	PrintHandler(string(uDec), c.Response().Writer, c.Request())
-
 	var err2 error
 	return err2
 }
@@ -40,13 +40,33 @@ func GetMd5String(s string) string {
 func SaveImg(imageURL, saveName string) (n int64, err error) {
 	out, err := os.Create(saveName)
 	defer out.Close()
+	if err != nil {
+		return
+	}
 	resp, err := http.Get(imageURL)
+
+	if err != nil {
+		return
+	}
 	pix, err := ioutil.ReadAll(resp.Body)
+
+	if err != nil {
+		return
+	}
 	defer resp.Body.Close()
 	n, err = io.Copy(out, bytes.NewReader(pix))
+
+	if err != nil {
+		return
+	}
 	// todo 获取图片类型
 	// fmt.Println(resp.Header.Get("Content-Type"))
 	return
+}
+
+func PrintErrorHandler(w http.ResponseWriter, r *http.Request) {
+
+	http.ServeFile(w, r, "404.png")
 }
 
 func PrintHandler(u string, w http.ResponseWriter, r *http.Request) {
@@ -58,17 +78,21 @@ func PrintHandler(u string, w http.ResponseWriter, r *http.Request) {
 	// 如果本地服务器不存在缓存，再去拿
 	_, err := os.Stat(imgpath)
 	if os.IsNotExist(err) {
-		SaveImg(u, imgpath)
-		src, err := imaging.Open(imgpath)
-		if err != nil {
-			log.Fatalf("Open failed: %v", err)
-		}
-		// src = imaging.Resize(src, 256, 0, imaging.Lanczos)
-		src = imaging.Resize(src, 350, 0, imaging.Lanczos)
-		src = imaging.CropAnchor(src, 350, 200, imaging.Center)
-		err = imaging.Save(src, imgpath)
-		if err != nil {
-			log.Fatalf("Save failed: %v", err)
+		_, err2 := SaveImg(u, imgpath)
+		if err2 != nil {
+			imgpath = "404.png"
+		} else {
+			src, err := imaging.Open(imgpath)
+			if err != nil {
+				log.Fatalf("Open failed: %v", err)
+			}
+			// src = imaging.Resize(src, 256, 0, imaging.Lanczos)
+			src = imaging.Resize(src, 350, 0, imaging.Lanczos)
+			src = imaging.CropAnchor(src, 350, 200, imaging.Center)
+			err = imaging.Save(src, imgpath)
+			if err != nil {
+				log.Fatalf("Save failed: %v", err)
+			}
 		}
 	}
 	http.ServeFile(w, r, imgpath)
@@ -79,7 +103,7 @@ func main() {
 
 	// Handler
 	e.GET("/", func(c echo.Context) error {
-		return c.String(http.StatusOK, "Hello, World!")
+		return c.String(http.StatusOK, "pic crop save server")
 	})
 
 	e.GET("/:url", api)
