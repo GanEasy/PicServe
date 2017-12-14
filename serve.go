@@ -50,10 +50,10 @@ func SaveImg(imageURL, saveName string) (n int64, err error) {
 	}
 	pix, err := ioutil.ReadAll(resp.Body)
 
+	defer resp.Body.Close()
 	if err != nil {
 		return
 	}
-	defer resp.Body.Close()
 	n, err = io.Copy(out, bytes.NewReader(pix))
 
 	if err != nil {
@@ -88,7 +88,7 @@ func PrintHandler(u string, w http.ResponseWriter, r *http.Request) {
 				imgpath = "404.png"
 			} else {
 				// src = imaging.Resize(src, 256, 0, imaging.Lanczos)
-				src = imaging.Resize(src, 800, 0, imaging.Lanczos)
+				src = imaging.Resize(src, 400, 0, imaging.Lanczos)
 				src = imaging.CropAnchor(src, 400, 300, imaging.Center)
 				err = imaging.Save(src, imgpath)
 				if err != nil {
