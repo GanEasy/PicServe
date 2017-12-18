@@ -19,6 +19,10 @@ import (
 // 接入微信接口服务
 func api(c echo.Context) error {
 	input := c.Param("url")
+	if input == "" {
+		PrintErrorHandler(c.Response().Writer, c.Request())
+
+	}
 	uDec, err := base64.URLEncoding.DecodeString(input)
 	if err != nil {
 		PrintErrorHandler(c.Response().Writer, c.Request())
@@ -66,7 +70,7 @@ func SaveImg(imageURL, saveName string) (n int64, err error) {
 
 func PrintErrorHandler(w http.ResponseWriter, r *http.Request) {
 
-	http.ServeFile(w, r, "404.png")
+	http.ServeFile(w, r, "images/404.png")
 }
 
 func PrintHandler(u string, w http.ResponseWriter, r *http.Request) {
@@ -80,12 +84,12 @@ func PrintHandler(u string, w http.ResponseWriter, r *http.Request) {
 	if os.IsNotExist(err) {
 		_, err2 := SaveImg(u, imgpath)
 		if err2 != nil {
-			imgpath = "404.png"
+			imgpath = "images/404.png"
 		} else {
 			src, err := imaging.Open(imgpath)
 			if err != nil {
 				log.Fatalf("Open failed: %v", err)
-				imgpath = "404.png"
+				imgpath = "images/404.png"
 			} else {
 				// src = imaging.Resize(src, 256, 0, imaging.Lanczos)
 				src = imaging.Resize(src, 400, 0, imaging.Lanczos)
@@ -93,7 +97,7 @@ func PrintHandler(u string, w http.ResponseWriter, r *http.Request) {
 				err = imaging.Save(src, imgpath)
 				if err != nil {
 					log.Fatalf("Save failed: %v", err)
-					imgpath = "404.png"
+					imgpath = "images/404.png"
 				}
 			}
 		}
@@ -109,28 +113,28 @@ func main() {
 		return c.String(http.StatusOK, "pic crop save server")
 	})
 
+	e.File("/favicon.ico", "images/favicon.ico")
+
 	e.GET("/:url", api)
 
 	// Handler
-	e.GET("/:url/:param", func(c echo.Context) error {
-		input := c.Param("url")
+	// e.GET("/:url/:param", func(c echo.Context) error {
+	// 	input := c.Param("url")
 
-		// input = "http://mmbiz.qpic.cn/mmbiz_jpg/Z8SUoc8pJqdBfxCtd51ibGNr7IOXNI4DuUVbpToIqdhZUibOYDmW0S8nCGchoExiaMIPJ8oaMsXB7KSyKNcsVjibBg/0?wx_fmt=jpeg"
-		// uEnc := base64.URLEncoding.EncodeToString([]byte(input))
-		// aHR0cDovL21tYml6LnFwaWMuY24vbW1iaXpfanBnL1o4U1VvYzhwSnFkQmZ4Q3RkNTFpYkdOcjdJT1hOSTREdVVWYnBUb0lxZGhaVWliT1lEbVcwUzhuQ0djaG9FeGlhTUlQSjhvYU1zWEI3S1N5S05jc1ZqaWJCZy8wP3d4X2ZtdD1qcGVn
+	// 	// input = "http://mmbiz.qpic.cn/mmbiz_jpg/Z8SUoc8pJqdBfxCtd51ibGNr7IOXNI4DuUVbpToIqdhZUibOYDmW0S8nCGchoExiaMIPJ8oaMsXB7KSyKNcsVjibBg/0?wx_fmt=jpeg"
+	// 	// uEnc := base64.URLEncoding.EncodeToString([]byte(input))
+	// 	// aHR0cDovL21tYml6LnFwaWMuY24vbW1iaXpfanBnL1o4U1VvYzhwSnFkQmZ4Q3RkNTFpYkdOcjdJT1hOSTREdVVWYnBUb0lxZGhaVWliT1lEbVcwUzhuQ0djaG9FeGlhTUlQSjhvYU1zWEI3S1N5S05jc1ZqaWJCZy8wP3d4X2ZtdD1qcGVn
 
-		// fmt.Println(string(uEnc))
+	// 	// fmt.Println(string(uEnc))
 
-		uDec, err := base64.URLEncoding.DecodeString(input)
-		if err != nil {
-			log.Fatalln(err)
-		}
-		fmt.Println(string(uDec))
-		// fmt.Println(string(uEnc))
-		return c.String(http.StatusOK, "Hello, World!")
-	})
-
-	e.File("/favicon.ico", "images/favicon.ico")
+	// 	uDec, err := base64.URLEncoding.DecodeString(input)
+	// 	if err != nil {
+	// 		log.Fatalln(err)
+	// 	}
+	// 	fmt.Println(string(uDec))
+	// 	// fmt.Println(string(uEnc))
+	// 	return c.String(http.StatusOK, "Hello, World!")
+	// })
 
 	// Start server
 	e.Logger.Fatal(e.Start(":8003"))
