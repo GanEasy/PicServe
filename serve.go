@@ -87,7 +87,7 @@ func PrintHandler(u string, w http.ResponseWriter, r *http.Request) {
 		} else {
 			src, err := imaging.Open(imgpath)
 			if err != nil {
-				fmt.Println("Open failed: %v", err)
+				// fmt.Println("Open failed: %v", err.Error)
 				imgpath = "images/404.png"
 			} else {
 				// src = imaging.Resize(src, 256, 0, imaging.Lanczos)
@@ -95,7 +95,7 @@ func PrintHandler(u string, w http.ResponseWriter, r *http.Request) {
 				src = imaging.CropAnchor(src, 400, 300, imaging.Center)
 				err = imaging.Save(src, imgpath)
 				if err != nil {
-					fmt.Println("Save failed: %v", err)
+					// fmt.Println("Save failed: %v", err.Error)
 					imgpath = "images/404.png"
 				}
 			}
