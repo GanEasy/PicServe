@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"os"
 
@@ -27,6 +28,20 @@ func api(c echo.Context) error {
 		PrintErrorHandler(c.Response().Writer, c.Request())
 	} else {
 		PrintHandler(string(uDec), c.Response().Writer, c.Request())
+	}
+	var err2 error
+	return err2
+}
+
+// 接入微信接口服务
+func file(c echo.Context) error {
+	url := c.QueryParam("url")
+
+	log.Println("file", url)
+	if url == "" {
+		PrintErrorHandler(c.Response().Writer, c.Request())
+	} else {
+		PrintHandler(url, c.Response().Writer, c.Request())
 	}
 	var err2 error
 	return err2
@@ -113,6 +128,8 @@ func main() {
 	})
 
 	e.File("/favicon.ico", "images/favicon.ico")
+
+	e.GET("/file", file)
 
 	e.GET("/:url", api)
 
