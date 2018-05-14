@@ -106,8 +106,8 @@ func PrintHandler(u string, w http.ResponseWriter, r *http.Request) {
 				imgpath = "images/404.png"
 			} else {
 				// src = imaging.Resize(src, 256, 0, imaging.Lanczos)
-				src = imaging.Resize(src, 400, 0, imaging.Lanczos)
-				src = imaging.CropAnchor(src, 400, 300, imaging.Center)
+				src = imaging.Resize(src, 484, 0, imaging.Lanczos)
+				src = imaging.CropAnchor(src, 484, 300, imaging.Center)
 				err = imaging.Save(src, imgpath)
 				if err != nil {
 					// fmt.Println("Save failed: %v", err.Error)
