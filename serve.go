@@ -47,6 +47,20 @@ func file(c echo.Context) error {
 	return err2
 }
 
+// 图片裁剪服务接口
+func crop(c echo.Context) error {
+	url := c.QueryParam("url")
+
+	log.Println("file", url)
+	if url == "" {
+		PrintErrorHandler(c.Response().Writer, c.Request())
+	} else {
+		PrintHandler(url, c.Response().Writer, c.Request())
+	}
+	var err2 error
+	return err2
+}
+
 //生成32位md5字串
 func GetMd5String(s string) string {
 	h := md5.New()
@@ -82,16 +96,16 @@ func SaveImg(imageURL, saveName string) (n int64, err error) {
 	return
 }
 
-func PrintErrorHandler(w http.ResponseWriter, r *http.Request) {
+func PrintCropErrorHandler(w http.ResponseWriter, r *http.Request) {
 
 	http.ServeFile(w, r, "images/404.png")
 }
 
-func PrintHandler(u string, w http.ResponseWriter, r *http.Request) {
+func PrintCropHandler(u string, w http.ResponseWriter, r *http.Request) {
 
 	imgname := GetMd5String(u)
 
-	imgpath := fmt.Sprintf("file/%v.jpg", imgname)
+	imgpath := fmt.Sprintf("crop/%v.jpg", imgname)
 
 	// 如果本地服务器不存在缓存，再去拿
 	_, err := os.Stat(imgpath)
@@ -119,6 +133,43 @@ func PrintHandler(u string, w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, imgpath)
 }
 
+func PrintErrorHandler(w http.ResponseWriter, r *http.Request) {
+
+	http.ServeFile(w, r, "images/404.png")
+}
+
+func PrintHandler(u string, w http.ResponseWriter, r *http.Request) {
+
+	imgname := GetMd5String(u)
+
+	imgpath := fmt.Sprintf("file/%v.jpg", imgname)
+
+	// 如果本地服务器不存在缓存，再去拿
+	_, err := os.Stat(imgpath)
+	if os.IsNotExist(err) {
+		_, err2 := SaveImg(u, imgpath)
+		if err2 != nil {
+			imgpath = "images/404.png"
+		} else {
+			src, err := imaging.Open(imgpath)
+			if err != nil {
+				// fmt.Println("Open failed: %v", err.Error)
+				imgpath = "images/404.png"
+			} else {
+				// src = imaging.Resize(src, 256, 0, imaging.Lanczos)
+				src = imaging.Resize(src, 484, 0, imaging.Lanczos)
+				// src = imaging.CropAnchor(src, 484, 300, imaging.Center)
+				err = imaging.Save(src, imgpath)
+				if err != nil {
+					// fmt.Println("Save failed: %v", err.Error)
+					imgpath = "images/404.png"
+				}
+			}
+		}
+	}
+	http.ServeFile(w, r, imgpath)
+}
+
 func main() {
 	e := echo.New()
 
@@ -130,6 +181,8 @@ func main() {
 	e.File("/favicon.ico", "images/favicon.ico")
 
 	e.GET("/file", file)
+
+	e.GET("/crop", crop)
 
 	e.GET("/:url", api)
 
