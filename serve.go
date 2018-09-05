@@ -11,6 +11,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"path"
 
 	"github.com/disintegration/imaging"
 	"github.com/labstack/echo"
@@ -51,25 +52,72 @@ func file(c echo.Context) error {
 func crop(c echo.Context) error {
 	url := c.QueryParam("url")
 
-	log.Println("file", url)
+	log.Println("crop", url)
 	if url == "" {
 		PrintErrorHandler(c.Response().Writer, c.Request())
 	} else {
-		PrintHandler(url, c.Response().Writer, c.Request())
+		PrintCropHandler(url, c.Response().Writer, c.Request())
 	}
 	var err2 error
 	return err2
+}
+
+//截取字符串 start 起点下标 end 终点下标(不包括)
+func Substr(str string, start int, end int) string {
+	rs := []rune(str)
+	length := len(rs)
+
+	if start < 0 || start > length {
+		panic("start is wrong")
+	}
+
+	if end < 0 || end > length {
+		panic("end is wrong")
+	}
+
+	return string(rs[start:end])
 }
 
 //生成32位md5字串
 func GetMd5String(s string) string {
 	h := md5.New()
 	h.Write([]byte(s))
-	return hex.EncodeToString(h.Sum(nil))
+	// return hex.EncodeToString(h.Sum(nil))
+	mddir := hex.EncodeToString(h.Sum(nil))
+	dir := Substr(mddir, 0, 3) + `/` + Substr(mddir, 3, 6) + `/` + Substr(mddir, 6, 32)
+	// panic(dir)
+	return dir
+}
+
+// 判断所给路径文件/文件夹是否存在(返回true是存在)
+func isExist(path string) bool {
+	_, err := os.Stat(path) //os.Stat获取文件信息
+	if err != nil {
+		if os.IsExist(err) {
+			return true
+		}
+		return false
+	}
+	return true
 }
 
 // SaveImg 保存图片到本地
 func SaveImg(imageURL, saveName string) (n int64, err error) {
+	filePath := path.Dir(saveName)
+	if !isExist(filePath) {
+		err := os.MkdirAll(filePath, os.ModePerm)
+		if err != nil {
+			return 0, err
+		}
+	}
+	// os.MkdirAll(dir,os.ModePerm)
+	// panic(dir)
+	// 	Dirname := DataRoot + strconv.Itoa(paper.Width) + "x" + strconv.Itoa(paper.Height) + "/"
+	// if os.IsNotExist(dir) {
+	// 	os.Mkdir(dir, 0755)
+	// 	fmt.Printf("dir %s created\n", Dirname)
+	// }
+
 	out, err := os.Create(saveName)
 	defer out.Close()
 	if err != nil {
