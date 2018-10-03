@@ -234,6 +234,9 @@ func main() {
 
 	e.GET("/:url", api)
 
+	e.GET("/MP_verify_q4wWNqE4xUaPr81X.txt", func(c echo.Context) error {
+		return c.String(http.StatusOK, "q4wWNqE4xUaPr81X")
+	})
 	// Handler
 	// e.GET("/:url/:param", func(c echo.Context) error {
 	// 	input := c.Param("url")
